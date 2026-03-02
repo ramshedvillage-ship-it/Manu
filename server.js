@@ -276,9 +276,10 @@ app.post('/api/claude', async (req, res) => {
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // ─── START ───────────────────────────────────────────────────
-const app = express();
-app.set("trust proxy", 1);
-  console.log(`\n🎯 REVO FIXER SERVER — port ${PORT}`);
-  console.log(`   Engines active: ${Object.entries(ENV).filter(([,v])=>v).map(([k])=>k).join(', ') || 'NONE — add .env keys'}`);
-  console.log(`   Open: http://localhost:${PORT}\n`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("==================================");
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log("==================================");
 });
