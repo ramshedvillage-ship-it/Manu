@@ -190,14 +190,21 @@
         }
 
         async function checkStatus() {
-            try {
-                const res = await fetch('/api/status');
-                const data = await res.json();
-                document.getElementById('statusText').textContent = `System: ${data.engines} Engines Active`;
-            } catch (e) {
-                document.getElementById('statusText').textContent = 'System Offline';
-            }
-        }
+    try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+
+        const active = data.engines
+            ? Object.values(data.engines).filter(v => v).length
+            : 0;
+
+        document.getElementById('statusText').textContent =
+            `System: ${active} Engines Active`;
+
+    } catch (e) {
+        document.getElementById('statusText').textContent = 'System Offline';
+    }
+}
 
         window.onload = () => {
             createParticles();
