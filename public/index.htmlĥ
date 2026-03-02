@@ -183,20 +183,16 @@
                 
                 const icons = { '1': '①', '2': '②', '5': '⑤', '10': '⑩', 'Pachinko': '🎰', 'CashHunt': '🎯', 'CoinFlip': '🪙', 'CrazyTime': '🎡', 'CrazyBonus': '🎡' };
                 
-                document.getElementById('signalIcon').textContent = icons[data.prediction] || '💎';
-                document.getElementById('signalText').textContent = data.prediction.toUpperCase();
-                document.getElementById('confidenceFill').style.width = data.confidence + '%';
-                document.getElementById('confidencePct').textContent = data.confidence + '%';
-                document.getElementById('reasonText').textContent = data.reason;
-                
-                document.getElementById('voteGpt').textContent = data.votes?.gpt || '-';
-                document.getElementById('voteGem').textContent = data.votes?.gemini || '-';
-                document.getElementById('voteFus').textContent = data.votes?.fusion || '-';
-                
-                document.getElementById('statAcc').textContent = (data.stats?.accuracy || 94) + '%';
-                document.getElementById('statStreak').textContent = data.stats?.streak || '3';
-                
-                showToast(`New Signal: ${data.prediction}`);
+                document.getElementById('valGpt').textContent = data.gpt || '-';
+document.getElementById('valGem').textContent = data.gemini || '-';
+document.getElementById('valClaude').textContent = data.claude || '-';
+document.getElementById('valFinal').textContent = data.final || '-';
+
+document.getElementById('confidenceFill').style.width = data.confidence + '%';
+document.getElementById('confidencePct').textContent = data.confidence + '%';
+document.getElementById('reasonText').textContent = data.reason;
+
+showToast("AI Majority Decision Ready");
             } catch (e) {
                 showToast("System busy - retrying...");
             } finally {

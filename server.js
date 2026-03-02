@@ -228,7 +228,7 @@ app.post('/api/gemini', async (req, res) => {
   if (!prompt)      return res.status(400).json({ error: 'prompt required' });
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${ENV.GEM_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEM_KEY}`
     const r   = await apiFetch(url, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -272,28 +272,91 @@ app.post('/api/claude', async (req, res) => {
   }
 });
 // --- PREDICT ---
+// --- REAL AI PREDICT ---
 app.get('/api/predict', async (req, res) => {
     try {
-        const options = ['1', '2', '5', '10', 'Pachinko', 'CashHunt', 'CoinFlip', 'CrazyTime'];
-        const pred = options[Math.floor(Math.random() * options.length)];
+
+        const options = ['1','2','5','10','Pachinko','CashHunt','CoinFlip','CrazyTime'];
+
+        async function callGPT() {
+            const r = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.OPENAI_KEY}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: [
+                        { role: "system", content: "Reply with only one option." },
+                        { role: "user", content: `Pick one from: ${options.join(", ")}` }
+                    ],
+                    max_tokens: 5
+                })
+            });
+            const data = await r.json();
+            return data.choices?.[0]?.message?.content?.trim();
+        }
+
+        async function callGemini() {
+            const r = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEM_KEY}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Pick one from: ${options.join(", ")}` }] }]
+                    })
+                }
+            );
+            const data = await r.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        }
+
+        async function callClaude() {
+            const r = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": process.env.ANT_KEY,
+                    "anthropic-version": "2023-06-01"
+                },
+                body: JSON.stringify({
+                    model: "claude-3-haiku-20240307",
+                    max_tokens: 5,
+                    messages: [
+                        { role: "user", content: `Pick one from: ${options.join(", ")}` }
+                    ]
+                })
+            });
+            const data = await r.json();
+            return data.content?.[0]?.text?.trim();
+        }
+
+        const [gpt, gemini, claude] = await Promise.all([
+            callGPT(),
+            callGemini(),
+            callClaude()
+        ]);
+
+        function majority(votes) {
+            const count = {};
+            votes.forEach(v => count[v] = (count[v] || 0) + 1);
+            return Object.keys(count).sort((a,b)=>count[b]-count[a])[0];
+        }
+
+        const final = majority([gpt, gemini, claude]);
 
         res.json({
-            prediction: pred,
-            confidence: 85 + Math.floor(Math.random() * 10),
-            reason: "AI pattern analysis active",
-            votes: {
-                gpt: pred,
-                gemini: pred,
-                fusion: pred
-            },
-            stats: {
-                accuracy: 94,
-                streak: 3
-            }
+            gpt,
+            gemini,
+            claude,
+            final,
+            confidence: 85
         });
 
-    } catch (e) {
-        res.status(500).json({ error: "Prediction failed" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 // ─── HEALTH ──────────────────────────────────────────────────
@@ -304,7 +367,6 @@ app.get("/", (req, res) => {
 });
 // ─── START ───────────────────────────────────────────────────
 const PORT = process.env.PORT || 8080;
-
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
