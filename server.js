@@ -83,6 +83,7 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+
 // ─── CT RAPIDAPI ─────────────────────────────────────────────
 app.get('/api/ct-live', async (req, res) => {
   if (!ENV.CT_KEY) return res.status(503).json({ error: 'CT key not configured' });
@@ -339,7 +340,17 @@ app.get('/api/predict', async (req, res) => {
             callClaude()
         ]);
 
-        function majority(votes) {
+          function majority(votes) {
+  const valid = votes.filter(v => v && v !== "undefined");
+
+  if (valid.length === 0) return "No result";
+
+  const count = {};
+  valid.forEach(v => count[v] = (count[v] || 0) + 1);
+
+  return Object.keys(count).sort((a,b)=>count[b]-count[a])[0];
+}
+}function majority(votes) {
             const count = {};
             votes.forEach(v => count[v] = (count[v] || 0) + 1);
             return Object.keys(count).sort((a,b)=>count[b]-count[a])[0];
