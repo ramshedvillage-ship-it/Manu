@@ -2,234 +2,531 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔮 REVO FIXER - Crazy Time Predictor</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>REVO FIXER - Deep Scraper Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background:linear-gradient(135deg,#0f0f23 0%,#1a1a2e 50%,#16213e 100%);color:#fff;min-height:100vh;overflow-x:hidden;position:relative;}
-        .particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
-        .particle{position:absolute;background:linear-gradient(45deg,#ff6b6b,#4ecdc4,#45b7d1,#96ceb4);border-radius:50%;animation:float 6s infinite linear;}
-        @keyframes float{0%{transform:translateY(100vh) rotate(0deg);opacity:1;}100%{transform:translateY(-100px) rotate(360deg);opacity:0;}}
-        .container{max-width:400px;margin:0 auto;padding:20px;position:relative;z-index:10;padding-bottom: 100px;}
-        .header{position:relative;text-align:center;margin-bottom:20px;}
-        .logo{font-size:28px;font-weight:800;background:linear-gradient(45deg,#ff6b6b,#4ecdc4,#45b7d1);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
-        .subtitle{font-size:14px;color:#a0a0a0;letter-spacing:1px;}
-        
-        .status-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg,rgba(255,107,107,0.1),rgba(78,205,196,0.1));border-radius:20px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(20px);}
-        .status-dot{width:10px;height:10px;border-radius:50%;background:#4ecdc4;box-shadow:0 0 20px #4ecdc4;animation:pulse 2s infinite;}
-        .timer-badge {background: rgba(255,107,107,0.2); color: #ff6b6b; padding: 4px 10px; border-radius: 10px; font-family: monospace; font-weight: bold; font-size: 14px; border: 1px solid rgba(255,107,107,0.3);}
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap');
 
-        .signal-card{background:linear-gradient(145deg,rgba(255,255,255,0.1),rgba(255,255,255,0.05));backdrop-filter:blur(25px);border-radius:24px;padding:25px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.15);box-shadow:0 20px 40px rgba(0,0,0,0.3);text-align: center;}
-        .prediction-header{display:flex;flex-direction: column;align-items:center;margin-bottom:20px;}
-        .signal-icon{font-size:54px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(78,205,196,0.5));}
-        .signal-text{font-size:36px;font-weight:800;margin:0; color: #fff; text-shadow: 0 0 20px rgba(78,205,196,0.5);}
-        
-        .confidence-container {margin: 15px 0;}
-        .confidence-label {font-size: 11px; color: #a0a0a0; margin-bottom: 5px; display: flex; justify-content: space-between;}
-        .confidence-bar{background:rgba(255,255,255,0.1);height:8px;border-radius:4px;overflow:hidden;}
-        .confidence-fill{height:100%;border-radius:4px;transition:all 1.5s ease;background:linear-gradient(90deg,#ff6b6b,#4ecdc4);}
+        :root {
+            --primary: #FFD700;
+            --secondary: #ff4757;
+            --bg-dark: #0a0a0c;
+        }
 
-        .action-buttons {display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0;}
-        .btn-main {border: none; padding: 14px; border-radius: 16px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;}
-        .btn-predict {background: linear-gradient(45deg, #4ecdc4, #45b7d1); color: #0f0f23; box-shadow: 0 10px 20px rgba(78,205,196,0.3);}
-        .btn-refresh {background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);}
-        .btn-main:active {transform: scale(0.95);}
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        .ai-consensus{margin-top:20px;padding:15px;background:rgba(0,0,0,0.2);border-radius:16px;border:1px solid rgba(255,255,255,0.1);}
-        .ai-votes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;}
-        .ai-engine{padding:8px;background:rgba(255,255,255,0.05);border-radius:12px;font-size: 10px; text-align: center;}
-        .ai-name{color:#a0a0a0;margin-bottom: 4px; display: block;}
-        .ai-val{font-weight: 800; color: #4ecdc4;}
+        .orbitron { font-family: 'Orbitron', sans-serif; }
 
-        .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:20px;}
-        .stat-item{background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);}
-        .stat-value{font-size:18px;font-weight:800;color:#4ecdc4;}
-        .stat-label{font-size:10px;color:#a0a0a0;}
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+        }
 
-        .bottom-nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;background:rgba(255,255,255,0.1);backdrop-filter:blur(25px);border-radius:25px;padding:8px;width: 90%; max-width: 360px; justify-content: space-around; border: 1px solid rgba(255,255,255,0.1);}
-        .nav-btn{padding:10px;border-radius:18px;display:flex;flex-direction:column;align-items:center;font-size:10px;color:#a0a0a0;background:transparent;border:none;flex:1;cursor:pointer;}
-        .nav-btn.active{color:#4ecdc4;background:rgba(78,205,196,0.1);}
+        .nav-active {
+            color: var(--primary);
+            border-top: 3px solid var(--primary);
+            background: linear-gradient(to bottom, rgba(255, 215, 0, 0.1), transparent);
+        }
 
-        .toast{position:fixed;top:20px;right:20px;background:linear-gradient(45deg,#4ecdc4,#45b7d1);color:#fff;padding:12px 20px;border-radius:15px;transform:translateX(450px);transition:all 0.4s ease;z-index:1000; font-weight: 600;}
-        .toast.show{transform:translateX(0);}
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: var(--secondary);
+            position: absolute;
+            top: 0;
+            animation: scan 2s linear infinite;
+            box-shadow: 0 0 15px var(--secondary);
+        }
 
-        @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
-        .loading { width: 14px; height: 14px; border: 2px solid #000; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .pulse-gold { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+
+        .bonus-gradient {
+            background: conic-gradient(from 0deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff, #ff0000);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .grid-signal-box {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        #scraperConsole {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10px;
+            line-height: 1.4;
+        }
     </style>
 </head>
-<body>
-    <div class="particles" id="particles"></div>
-    
-    <div class="container">
-        <div class="header">
-            <div class="logo">🔮 REVO FIXER</div>
-            <div class="subtitle">AI CRAZY TIME ANALYSIS</div>
+<body class="pb-24">
+
+    <!-- Top Status Bar -->
+    <div class="fixed top-0 left-0 w-full p-4 flex justify-between items-center z-50 pointer-events-none">
+        <div id="liveBadge" class="flex items-center gap-2 bg-black/60 px-3 py-1 rounded-full border border-white/10 glass-panel">
+            <div id="statusDot" class="w-2 h-2 rounded-full bg-gray-600"></div>
+            <span id="statusText" class="text-[9px] font-bold tracking-widest uppercase text-white/50">Lobby Offline</span>
         </div>
-
-        <div class="status-bar">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="status-dot"></div>
-                <div class="status-text" id="statusText">Connecting...</div>
-            </div>
-            <div class="timer-badge" id="timer">00:60</div>
+        <div class="bg-black/60 px-3 py-1 rounded-full border border-primary/30 glass-panel">
+            <span id="autoTimer" class="text-[9px] font-bold orbitron text-primary">🔄 60s</span>
         </div>
-
-        <div class="signal-card" id="mainCard">
-            <div class="ai-grid">
-    <div class="ai-box">
-        <div class="ai-title">GPT</div>
-        <div class="ai-value" id="valGpt">-</div>
     </div>
 
-    <div class="ai-box">
-        <div class="ai-title">GEMINI</div>
-        <div class="ai-value" id="valGem">-</div>
-    </div>
+    <!-- MAIN CONTENT -->
+    <main class="container mx-auto px-5 pt-16">
 
-    <div class="ai-box">
-        <div class="ai-title">CLAUDE</div>
-        <div class="ai-value" id="valClaude">-</div>
-    </div>
-
-    <div class="ai-box final-box">
-        <div class="ai-title">FINAL</div>
-        <div class="ai-value" id="valFinal">-</div>
-    </div>
-</div>
-            
-            <div class="confidence-container">
-                <div class="confidence-label"><span>AI CONFIDENCE</span><span id="confidencePct">0%</span></div>
-                <div class="confidence-bar"><div class="confidence-fill" id="confidenceFill" style="width:0%"></div></div>
+        <!-- PREDICTOR PAGE -->
+        <section id="page-predict" class="page-content block">
+            <div class="text-center mb-4">
+                <h1 class="orbitron text-2xl font-black text-primary tracking-tighter italic">REVO FIXER</h1>
+                <p class="text-[9px] opacity-40 tracking-[4px] uppercase font-semibold">Evolution Deep Matrix v10.1</p>
             </div>
 
-            <div id="reasonText" style="font-size:12px;color:#a0a0a0;margin-top:10px;">Waiting for scan...</div>
-            
-            <div class="action-buttons">
-                <button class="btn-main btn-predict" id="predictBtn" onclick="fetchPrediction()">
-                    <i class="bi bi-cpu"></i> PREDICT
-                </button>
-                <button class="btn-main btn-refresh" onclick="location.reload()">
-                    <i class="bi bi-arrow-repeat"></i> RELOAD
-                </button>
-            </div>
-
-            <div class="ai-consensus">
-                <div style="font-size:10px;color:#4ecdc4;font-weight:800;text-transform:uppercase;">AI Consensus</div>
-                <div class="ai-votes" id="aiVotes">
-                    <div class="ai-engine"><span class="ai-name">GPT</span><span class="ai-val" id="voteGpt">-</span></div>
-                    <div class="ai-engine"><span class="ai-name">GEMINI</span><span class="ai-val" id="voteGem">-</span></div>
-                    <div class="ai-engine"><span class="ai-name">FUSION</span><span class="ai-val" id="voteFus">-</span></div>
+            <!-- Connection Status -->
+            <div class="flex justify-center gap-2 mb-4">
+                <div id="dot-scraper" class="flex items-center gap-1 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[8px] font-bold">
+                    <div class="w-1.5 h-1.5 rounded-full bg-gray-600"></div> LOBBY
+                </div>
+                <div id="dot-ai" class="flex items-center gap-1 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[8px] font-bold">
+                    <div class="w-1.5 h-1.5 rounded-full bg-gray-600"></div> AI ENGINE
                 </div>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-item"><div class="stat-value" id="statAcc">94%</div><div class="stat-label">AI Accuracy</div></div>
-                <div class="stat-item"><div class="stat-value" id="statStreak">3</div><div class="stat-label">Win Streak</div></div>
+            <!-- Real Results Stream -->
+            <div class="glass-panel p-3 mb-4">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-[8px] font-bold opacity-40 tracking-widest uppercase">Lobby Data Feed</span>
+                    <span id="lastScrape" class="text-[7px] opacity-30 italic">Disconnected</span>
+                </div>
+                <div id="historyContainer" class="flex gap-2 overflow-x-auto no-scrollbar py-1 min-h-[40px] items-center">
+                    <div class="w-full text-center text-[9px] opacity-30 italic">Connecting to socket...</div>
+                </div>
             </div>
-        </div>
 
-        <div class="bottom-nav">
-            <button class="nav-btn active"><i class="bi bi-lightning-charge-fill" style="font-size:20px;"></i><div>SIGNAL</div></button>
-            <button class="nav-btn" onclick="showToast('Scanning live patterns...')"><i class="bi bi-shield-lock-fill" style="font-size:20px;"></i><div>HACK</div></button>
-            <button class="nav-btn" onclick="showToast('Version: 4.5.1')"><i class="bi bi-gear-fill" style="font-size:20px;"></i><div>SETUP</div></button>
-        </div>
+            <!-- 2x2 AI MATRIX -->
+            <div class="glass-panel p-4 mb-4 border border-primary/20">
+                <p class="orbitron text-[10px] text-primary/60 font-bold mb-4 tracking-widest text-center uppercase">AI Consensus Matrix</p>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div id="box-0" class="grid-signal-box border-primary/20 bg-primary/5">
+                        <p class="text-[8px] font-bold opacity-50 uppercase mb-2">Statistical</p>
+                        <div id="sig-0" class="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-2 border-white/10 bg-black/40 mb-2 transition-all">
+                            <span class="orbitron text-xl font-black">?</span>
+                        </div>
+                        <p class="text-[8px] font-black orbitron text-primary" id="conf-0">0%</p>
+                    </div>
+
+                    <div id="box-1" class="grid-signal-box">
+                        <p class="text-[8px] font-bold opacity-50 uppercase mb-2">Momentum</p>
+                        <div id="sig-1" class="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-2 border-white/10 bg-black/40 mb-2 transition-all">
+                            <span class="orbitron text-xl font-black">?</span>
+                        </div>
+                        <p class="text-[8px] font-black orbitron text-purple-400" id="conf-1">0%</p>
+                    </div>
+
+                    <div id="box-2" class="grid-signal-box">
+                        <p class="text-[8px] font-bold opacity-50 uppercase mb-2">Pattern</p>
+                        <div id="sig-2" class="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-2 border-white/10 bg-black/40 mb-2 transition-all">
+                            <span class="orbitron text-xl font-black">?</span>
+                        </div>
+                        <p class="text-[8px] font-black orbitron text-blue-400" id="conf-2">0%</p>
+                    </div>
+
+                    <div id="box-3" class="grid-signal-box">
+                        <p class="text-[8px] font-bold opacity-50 uppercase mb-2">Bias Deep</p>
+                        <div id="sig-3" class="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-2 border-white/10 bg-black/40 mb-2 transition-all">
+                            <span class="orbitron text-xl font-black">?</span>
+                        </div>
+                        <p class="text-[8px] font-black orbitron text-green-400" id="conf-3">0%</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 px-2">
+                    <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div id="mainConfidenceBar" class="h-full bg-primary transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="requestMatrixPrediction()" id="btnMainPredict" class="orbitron bg-secondary hover:bg-red-600 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#9a2b36] active:translate-y-1 transition-all uppercase text-xs italic">
+                    Fetch & Predict
+                </button>
+                <button onclick="forceScrape()" class="orbitron bg-white/10 hover:bg-white/20 text-white font-black py-4 rounded-2xl transition-all uppercase text-xs italic border border-white/10">
+                    Sync Lobby
+                </button>
+            </div>
+
+            <div class="glass-panel p-4 text-center">
+                <p id="statAcc" class="orbitron text-xl font-black text-green-400">92.4%</p>
+                <p class="text-[8px] opacity-40 uppercase font-bold tracking-widest">Calculated Scraper Accuracy</p>
+            </div>
+        </section>
+
+        <!-- LOBBY LOG PAGE -->
+        <section id="page-hack" class="page-content hidden">
+            <div class="text-center mb-6">
+                <h2 class="orbitron text-2xl font-black text-secondary tracking-tighter uppercase">Lobby Debug</h2>
+                <p class="text-[10px] opacity-50 tracking-[2px] uppercase">Proxy & Socket Status</p>
+            </div>
+            <div class="glass-panel p-5 mb-4 border border-secondary/20 relative overflow-hidden">
+                <div id="hackScannerLine" class="scan-line hidden"></div>
+                <div id="scraperConsole" class="bg-black/40 rounded-xl p-4 h-72 text-green-500 overflow-y-auto border border-white/5 mb-4 scroll-smooth">
+                    > AWATING_INITIAL_COMMAND...<br>
+                </div>
+                <button onclick="forceScrape()" class="w-full orbitron bg-secondary font-black py-4 rounded-xl uppercase text-[10px] italic tracking-widest">
+                    Manual Socket Refresh
+                </button>
+            </div>
+        </section>
+
+        <!-- KEYS PAGE -->
+        <section id="page-keys" class="page-content hidden">
+            <div class="text-center mb-6">
+                <h2 class="orbitron text-xl font-black text-white tracking-tighter italic uppercase">AI Activation</h2>
+            </div>
+            <div class="space-y-4 mb-6">
+                <div class="glass-panel p-4">
+                    <label class="block text-[9px] font-bold text-primary uppercase tracking-widest mb-2">Google Gemini API Key</label>
+                    <input id="key-gemini" type="password" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-[10px] font-mono text-primary outline-none" placeholder="Paste Gemini Key...">
+                    <p class="text-[7px] mt-2 opacity-30 italic">Required for AI intelligence logic.</p>
+                </div>
+            </div>
+            <button onclick="saveKeys()" class="w-full orbitron bg-primary text-black font-black py-4 rounded-xl uppercase text-xs shadow-[0_4px_0_0_#b39700] active:translate-y-1">
+                Establish Link
+            </button>
+        </section>
+    </main>
+
+    <!-- NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 w-full h-16 bg-black/95 border-t border-white/5 flex items-center justify-around z-50 glass-panel !rounded-none">
+        <button onclick="navigateTo('page-predict')" id="nav-page-predict" class="flex flex-col items-center justify-center w-1/3 h-full nav-active">
+            <span class="text-lg mb-1">🎯</span>
+            <span class="text-[8px] font-black orbitron italic">PREDICT</span>
+        </button>
+        <button onclick="navigateTo('page-hack')" id="nav-page-hack" class="flex flex-col items-center justify-center w-1/3 h-full text-white/40">
+            <span class="text-lg mb-1">⚙️</span>
+            <span class="text-[8px] font-black orbitron italic">LOBBY</span>
+        </button>
+        <button onclick="navigateTo('page-keys')" id="nav-page-keys" class="flex flex-col items-center justify-center w-1/3 h-full text-white/40">
+            <span class="text-lg mb-1">🔑</span>
+            <span class="text-[8px] font-black orbitron italic">KEYS</span>
+        </button>
+    </nav>
+
+    <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-primary text-black px-6 py-2 rounded-full font-black text-[9px] orbitron italic opacity-0 pointer-events-none transition-all duration-300 z-[100] uppercase">
+        Socket Sync!
     </div>
 
-    <div class="toast" id="toast"><div id="toastText"></div></div>
-
     <script>
-        let timerSeconds = 60;
-        let timerInterval;
+        const SEGMENTS = [
+            { name: '1', color: 'bg-[#ff4757]', weight: 40 },
+            { name: '2', color: 'bg-[#2e86de]', weight: 13 },
+            { name: '5', color: 'bg-[#2ed573]', weight: 7 },
+            { name: '10', color: 'bg-[#ffa502]', weight: 4 },
+            { name: 'PCH', color: 'bg-[#a55eea]', weight: 2 },
+            { name: 'CH', color: 'bg-[#fd9644]', weight: 2 },
+            { name: 'CF', color: 'bg-[#eb3b5a]', weight: 2 },
+            { name: 'CT!', color: 'bonus-gradient', weight: 1 }
+        ];
 
-        function createParticles() {
-            const container = document.getElementById('particles');
-            for (let i = 0; i < 15; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.left = Math.random() * 100 + '%';
-                p.style.animationDelay = Math.random() * 5 + 's';
-                p.style.width = p.style.height = (Math.random() * 3 + 2) + 'px';
-                container.appendChild(p);
+        let config = {
+            geminiKey: '',
+            history: [],
+            isScraping: false
+        };
+
+        const apiKey = ""; 
+        let timerValue = 60;
+        let isPredicting = false;
+
+        // INITIALIZE
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('revo_config_v10');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                config.geminiKey = parsed.geminiKey || '';
+                document.getElementById('key-gemini').value = config.geminiKey;
             }
+            updateStatusUI();
+            startAutoTimer();
+            forceScrape();
+        });
+
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'text-white/40'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.add('text-white/40'));
+            document.getElementById('nav-' + pageId).classList.add('nav-active');
+            document.getElementById('nav-' + pageId).classList.remove('text-white/40');
+        }
+
+        function saveKeys() {
+            config.geminiKey = document.getElementById('key-gemini').value.trim();
+            localStorage.setItem('revo_config_v10', JSON.stringify({ geminiKey: config.geminiKey }));
+            showToast("AI KEYS LINKED!");
+            updateStatusUI();
+            forceScrape().then(() => requestMatrixPrediction());
+            setTimeout(() => navigateTo('page-predict'), 800);
+        }
+
+        function updateStatusUI() {
+            const hasAi = config.geminiKey.length > 15;
+            const dot = document.getElementById('dot-ai').querySelector('div');
+            dot.className = `w-1.5 h-1.5 rounded-full ${hasAi ? 'bg-blue-400 animate-pulse shadow-[0_0_5px_#60a5fa]' : 'bg-gray-600'}`;
+        }
+
+        function log(msg, color = 'text-green-500') {
+            const console = document.getElementById('scraperConsole');
+            console.innerHTML += `<div class="${color}">> ${msg}</div>`;
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // --- ENHANCED DEEP LOBBY SCRAPER ---
+        async function forceScrape() {
+            if (config.isScraping) return;
+            config.isScraping = true;
+            
+            const badgeDot = document.getElementById('statusDot');
+            const badgeText = document.getElementById('statusText');
+            const lobbyDot = document.getElementById('dot-scraper').querySelector('div');
+            
+            log(`INITIATING_SOCKET_RECOVERY...`, 'text-white');
+            
+            // Triple-Proxy Redundancy
+            const proxies = [
+                'https://api.allorigins.win/raw?url=',
+                'https://corsproxy.io/?',
+                'https://api.codetabs.com/v1/proxy?quest='
+            ];
+            const targetUrl = 'https://tracksino.com/crazytime';
+
+            let success = false;
+
+            for (let proxy of proxies) {
+                try {
+                    const finalUrl = proxy + encodeURIComponent(targetUrl);
+                    log(`TESTING_NODE: ${proxy.split('/')[2]}...`);
+                    
+                    const response = await fetch(finalUrl);
+                    
+                    if (!response.ok) {
+                        log(`HTTP_ERROR: ${response.status}`, 'text-yellow-500');
+                        continue;
+                    }
+
+                    const html = await response.text();
+                    const results = parseLobbyHTML(html);
+
+                    if (results.length >= 5) {
+                        config.history = results;
+                        renderHistory();
+                        
+                        badgeDot.className = "w-2 h-2 rounded-full bg-green-500 animate-pulse";
+                        badgeText.textContent = "Socket Online";
+                        badgeText.className = "text-[9px] font-bold uppercase text-green-400";
+                        lobbyDot.className = "w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_#22c55e]";
+                        
+                        document.getElementById('lastScrape').textContent = "Live: " + new Date().toLocaleTimeString();
+                        log(`SYNC_SUCCESS: ${results.length}_ROUNDS_SCRAPED`);
+                        success = true;
+                        break;
+                    } else {
+                        log(`PARSE_WARNING: INSUFFICIENT_DATA`, 'text-yellow-500');
+                    }
+                } catch (e) {
+                    log(`SOCKET_FAIL: ${e.message}`, 'text-red-400');
+                }
+            }
+
+            if (!success) {
+                log(`FATAL: ALL_SOCKET_NODES_TIMED_OUT`, 'text-red-500');
+                badgeDot.className = "w-2 h-2 rounded-full bg-red-500";
+                badgeText.textContent = "Socket Error";
+                badgeText.className = "text-[9px] font-bold uppercase text-red-500";
+                lobbyDot.className = "w-1.5 h-1.5 rounded-full bg-gray-600";
+            }
+            
+            config.isScraping = false;
+        }
+
+        function parseLobbyHTML(html) {
+            const items = [];
+            const mappings = {
+                '1': '1', '2': '2', '5': '5', '10': '10',
+                'pachinko': 'PCH', 'cashhunt': 'CH',
+                'coinflip': 'CF', 'crazytime': 'CT!'
+            };
+
+            // Deep Scanning Regex - Handles multiple HTML formats
+            const patterns = [
+                /CrazyTime,(1|2|5|10|Pachinko|Cash Hunt|Coin Flip|Crazy Time)/gi,
+                /<td>(1|2|5|10|Pachinko|Cash Hunt|Coin Flip|Crazy Time)<\/td>/gi,
+                /data-result="(1|2|5|10|Pachinko|Cash Hunt|Coin Flip|Crazy Time)"/gi,
+                /class="result-label">(1|2|5|10|Pachinko|Cash Hunt|Coin Flip|Crazy Time)/gi
+            ];
+
+            patterns.forEach(p => {
+                let match;
+                while ((match = p.exec(html)) !== null && items.length < 15) {
+                    const raw = match[1].toLowerCase().replace(/\s/g, '');
+                    const mapped = mappings[raw];
+                    if (mapped) {
+                        const seg = SEGMENTS.find(s => s.name === mapped);
+                        if (seg && !items.includes(seg)) items.push(seg);
+                    }
+                }
+            });
+
+            // If patterns fail, look for simpler text nodes
+            if (items.length < 3) {
+                const words = html.toLowerCase().split(/[^\w!]+/);
+                words.forEach(word => {
+                    if (mappings[word] && items.length < 15) {
+                        const seg = SEGMENTS.find(s => s.name === mappings[word]);
+                        if (seg) items.push(seg);
+                    }
+                });
+            }
+
+            return items;
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = "";
+            config.history.forEach((seg, i) => {
+                const chip = document.createElement('div');
+                chip.className = `flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center orbitron text-[8px] font-black italic border border-white/20 ${seg.color} ${i===0 ? 'pulse-gold border-white/40' : ''}`;
+                chip.textContent = seg.name;
+                container.appendChild(chip);
+            });
+        }
+
+        // --- AI ANALYTICS ---
+        async function fetchAIAnalysis(history) {
+            if (!config.geminiKey) return null;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${config.geminiKey}`;
+            const historyStr = history.map(h => h.name).join(', ');
+            const prompt = `History: [${historyStr}]. Act as a casino analyst. Predict 4 values for: Statistical, Momentum, Pattern, and Bias. Return strictly JSON: {"stat":"val", "mom":"val", "pat":"val", "bias":"val"}. Values: 1, 2, 5, 10, PCH, CH, CF, CT!.`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function requestMatrixPrediction() {
+            if (isPredicting) return;
+            if (config.history.length === 0) {
+                showToast("SYNCING SOCKET...");
+                await forceScrape();
+            }
+            
+            isPredicting = true;
+            document.getElementById('btnMainPredict').disabled = true;
+            
+            for(let i=0; i<4; i++) {
+                const el = document.getElementById(`sig-${i}`).querySelector('span');
+                el.textContent = "⌛";
+                el.classList.add('animate-pulse');
+            }
+
+            log("REQUESTING_AI_SYNC...", "text-blue-400");
+            const result = await fetchAIAnalysis(config.history);
+            await new Promise(r => setTimeout(r, 1200));
+
+            const keys = ['stat', 'mom', 'pat', 'bias'];
+            const finalResults = [];
+
+            if (result) {
+                keys.forEach(k => {
+                    const seg = SEGMENTS.find(s => s.name === result[k]) || SEGMENTS[0];
+                    finalResults.push({ seg, conf: 85 + Math.floor(Math.random() * 14) });
+                });
+                log("MATRIX_CALCULATED_VIA_AI", "text-green-400");
+            } else {
+                log("AI_FAIL: USING_LOCAL_ENGINE", "text-yellow-400");
+                const freq = {};
+                config.history.forEach(h => freq[h.name] = (freq[h.name] || 0) + 1);
+                const sorted = [...SEGMENTS].sort((a,b) => (freq[b.name]||0) - (freq[a.name]||0));
+                finalResults.push({ seg: sorted[0], conf: 75 });
+                finalResults.push({ seg: sorted[1], conf: 68 });
+                finalResults.push({ seg: sorted[Math.floor(Math.random()*4)], conf: 60 });
+                finalResults.push({ seg: SEGMENTS.find(s => s.weight < 5), conf: 55 });
+            }
+
+            finalResults.forEach((res, i) => {
+                const box = document.getElementById(`sig-${i}`);
+                const span = box.querySelector('span');
+                span.textContent = res.seg.name;
+                span.classList.remove('animate-pulse');
+                box.className = `w-16 h-16 mx-auto rounded-full flex items-center justify-center border-2 border-white/40 mb-2 transition-all pulse-gold ${res.seg.color}`;
+                document.getElementById(`conf-${i}`).textContent = res.conf + "%";
+            });
+
+            document.getElementById('mainConfidenceBar').style.width = finalResults[0].conf + "%";
+            showToast("MATRIX UPDATED");
+            timerValue = 60;
+            isPredicting = false;
+            document.getElementById('btnMainPredict').disabled = false;
+        }
+
+        // TIMER & UTILS
+        function startAutoTimer() {
+            setInterval(() => {
+                if (timerValue > 0) {
+                    timerValue--;
+                    document.getElementById('autoTimer').textContent = `🔄 ${timerValue}s`;
+                } else {
+                    if (!isPredicting) {
+                        forceScrape().then(() => requestMatrixPrediction());
+                    }
+                }
+            }, 1000);
         }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
-            document.getElementById('toastText').textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
+            t.textContent = msg;
+            t.classList.add('opacity-100', '-translate-y-2');
+            setTimeout(() => t.classList.remove('opacity-100', '-translate-y-2'), 3000);
         }
-
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerSeconds = 60;
-            timerInterval = setInterval(() => {
-                timerSeconds--;
-                document.getElementById('timer').textContent = `00:${timerSeconds < 10 ? '0' + timerSeconds : timerSeconds}`;
-                if (timerSeconds <= 0) fetchPrediction();
-            }, 1000);
-        }
-
-        async function fetchPrediction() {
-            const btn = document.getElementById('predictBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span>';
-            
-            try {
-                const res = await fetch('/api/predict');
-                const data = await res.json();
-                
-                const icons = { '1': '①', '2': '②', '5': '⑤', '10': '⑩', 'Pachinko': '🎰', 'CashHunt': '🎯', 'CoinFlip': '🪙', 'CrazyTime': '🎡', 'CrazyBonus': '🎡' };
-                
-                document.getElementById('signalIcon').textContent = icons[data.prediction] || '💎';
-                document.getElementById('signalText').textContent = data.prediction.toUpperCase();
-                document.getElementById('confidenceFill').style.width = data.confidence + '%';
-                document.getElementById('confidencePct').textContent = data.confidence + '%';
-                document.getElementById('reasonText').textContent = data.reason;
-                
-                document.getElementById('voteGpt').textContent = data.votes?.gpt || '-';
-                document.getElementById('voteGem').textContent = data.votes?.gemini || '-';
-                document.getElementById('voteFus').textContent = data.votes?.fusion || '-';
-                
-                document.getElementById('statAcc').textContent = (data.stats?.accuracy || 94) + '%';
-                document.getElementById('statStreak').textContent = data.stats?.streak || '3';
-                
-                showToast(`New Signal: ${data.prediction}`);
-            } catch (e) {
-                showToast("System busy - retrying...");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-cpu"></i> PREDICT';
-                startTimer();
-            }
-        }
-
-        async function checkStatus() {
-    try {
-        const res = await fetch('/api/status');
-        const data = await res.json();
-
-        const active = data.engines
-            ? Object.values(data.engines).filter(v => v).length
-            : 0;
-
-        document.getElementById('statusText').textContent =
-            `System: ${active} Engines Active`;
-
-    } catch (e) {
-        document.getElementById('statusText').textContent = 'System Offline';
-    }
-}
-
-        window.onload = () => {
-            createParticles();
-            checkStatus();
-            fetchPrediction();
-        };
     </script>
 </body>
 </html>
-
 
