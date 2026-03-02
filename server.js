@@ -276,13 +276,11 @@ app.post('/api/claude', async (req, res) => {
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // --- ROOT (INDEX PAGE)
 app.get("/", (req, res) => {
-  res.sendFile(require("path").join(__dirname, "public", "index.html"));
+  res.sendFile(require("path").join(__dirname, "index.html"));
 });
 // ─── START ───────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
-app.listen(PORT, () => {
-  console.log("==================================");
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log("==================================");
 });
