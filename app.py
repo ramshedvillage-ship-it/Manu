@@ -28,7 +28,7 @@ def normalize(row):
     rid = row['id']
     if not isinstance(rid,str) or not rid: raise ValueError('Missing source ID')
     top = o.get('topSlot') or {}
-    return {'id':rid, 'settledAt':d['settledAt'], 'timestamp':ts, 'outcome':sector,
+    return {'id':rid, 'startedAt':d.get('startedAt'), 'settledAt':d['settledAt'], 'timestamp':ts, 'outcome':sector,
             'multiplier':o.get('maxMultiplier'), 'topSlot':top.get('wheelSector'),
             'topMultiplier':top.get('multiplier'), 'matched':o.get('isTopSlotMatchedToWheelResult',False),
             'payout':row.get('totalAmount'), 'currency':d.get('currency'), 'winners':row.get('totalWinners'), 'tableId':TABLE}

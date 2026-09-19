@@ -14,7 +14,7 @@ function normalize(row, now) {
       || typeof row?.id !== 'string' || !row.id || !Number.isFinite(ts) || ts > now+120000) return null;
   const number = n => typeof n === 'number' && Number.isFinite(n) ? n : null;
   return {
-    id:row.id, settledAt:d.settledAt, timestamp:ts/1000, outcome,
+    id:row.id, startedAt:d.startedAt ?? null, settledAt:d.settledAt, timestamp:ts/1000, outcome,
     multiplier:number(o.maxMultiplier), topSlot:o.topSlot?.wheelSector ?? null,
     topMultiplier:number(o.topSlot?.multiplier), matched:o.isTopSlotMatchedToWheelResult === true,
     payout:number(row.totalAmount), currency:d.currency ?? null,

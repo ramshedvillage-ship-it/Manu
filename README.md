@@ -29,17 +29,48 @@ Open http://localhost:3000. Set `PORT` to change the listening port. The browser
 
 This confirms provenance to the CasinoScores endpoint, not independent verification of the physical wheel. The endpoint is third-party infrastructure; availability, latency and schema are outside this application's control. Confirm the provider's permission, licensing and terms before commercial redistribution. Do not bypass any future access restrictions.
 
-## Prediction limitations
+## Forecasts and prospective HIT / MISS tracking
 
-The experimental box shows four highest **smoothed historical estimates**, not known future outcomes and not validated next-spin probabilities.
+**No hack, guaranteed next result, calibrated next-spin model or proven edge is offered.** A fair independent wheel cannot be predicted from historical frequency. Number outcomes occupy 45/54 segments, so selecting the same four numbers can be a legitimate coverage strategy without demonstrating any skill.
 
-For each of eight outcomes:
+All eight outcomes, including all four bonuses, are now displayed. The exploratory historical estimate remains:
 
 ```
 estimate = (count in latest up-to-100 real rounds + segment count) / (sample size + 54)
 ```
 
-The 54-segment prior uses counts 21/13/7/4/4/2/2/1 for 1/2/5/10/Coin Flip/Pachinko/Cash Hunt/Crazy Time. Under a fair, independent wheel model, the wheel baseline—not recent frequency—is the next-spin probability. Historical smoothing is exploratory, not evidence of a predictive edge. Sum of top-four estimates is coverage, not accuracy. No fabricated hit rates, accuracy claims, countdowns or synthetic backtests are shown.
+The 54-segment prior uses counts 21/13/7/4/4/2/2/1 for 1/2/5/10/Coin Flip/Pachinko/Cash Hunt/Crazy Time. Under a fair independent wheel model, the wheel baseline—not recent frequency—is the next-spin probability.
+
+Two explicitly labelled selection policies:
+
+- **Highest estimated coverage:** rank all eight estimates and select the first four. Repeated number selections are expected. No bonus is banned.
+- **2 numbers + 2 bonuses:** select the two highest estimates in each group. This intentionally allocates slots to bonuses, usually at the cost of total coverage. It does not predict that a bonus is due.
+
+### Forward-only local validation
+
+Press **Start live validation**. All eight estimates, four selections, model version, selected policy, sample size, training-through source ID and lock timestamp are saved before observing a new eligible round. Policy changes apply only to the next forecast; pending selections never change in response to a result.
+
+- HIT: the actual eligible result is one of the frozen four.
+- MISS: the actual eligible result is not selected. An unselected bonus is a MISS, not excused.
+- UNSCORED: already-started rounds, missing start/settlement evidence, additional rounds without a pre-existing forecast, cancelled tracking, source delays/failures, observation gaps over 45 seconds, missing cursor records, hidden pages or reloaded sessions.
+
+An eligible round's **source-reported start** must be strictly more than 2 seconds after the forecast lock. The first initial history response never generates retrospective wins. Within an uninterrupted observation session, the next observed eligible round resolves the pending forecast; duplicate round IDs cannot be scored twice. Additional retrieved rounds do not receive invented backdated predictions.
+
+The fixed 1/2/5/10 baseline is scored on exactly the same eligible rounds. Bonus-only and number-only performance are shown separately. Overall counters combine policies; inspect the policy recorded on each row before interpreting changes.
+
+### Important limits
+
+This is a **browser-local, editable log**, not a server-signed or independently audited record. Use one tab per browser. Each device/origin has separate history; the live preview does not seed the production site's statistics. Reloads preserve records but cancel an unverified pending forecast and require restarting validation. At most the most recent 1,000 entries are retained. Export JSON for frozen probabilities, timestamps, source IDs, actual results and reasons. If local storage is blocked, the UI warns that logging is session-only.
+
+Keep the page visible. Source time and retrieved ordering are relied on; feed completeness and physical-wheel outcomes are not independently audited. Unscored exclusions can bias hit rates, especially if a long bonus exceeds the 3-minute stale threshold. These observations do not constitute a controlled trial. Hit rate is not profit; four-outcome coverage is not accuracy. No fabricated hit rates, future outcomes, or retroactive model changes are used.
+
+### Accounting regression test
+
+```
+npm test
+```
+
+Requires the real source endpoint. Tests replay actual source records with an isolated test clock to exercise scoring guards, bonus misses, deduplication and cancellation. They do not populate the UI and their output is **not** prospective validation or an accuracy claim. There is no synthetic-result fallback if the source is unavailable.
 
 ## Features
 
@@ -48,7 +79,8 @@ The 54-segment prior uses counts 21/13/7/4/4/2/2/1 for 1/2/5/10/Coin Flip/Pachin
 - Connection monitor and explicit stale/offline states
 - 1/6/24-hour retrieved-sample statistics
 - Outcome and bonus filtering, pagination, CSV export
-- Eight-outcome estimates and visible methodology
+- All eight outcome estimates, optional bonus-inclusive allocation, and visible methodology
+- Frozen prospective forecasts with HIT / MISS / UNSCORED logging, baseline comparison and JSON export
 
 ## Netlify deployment (fixes the static-host 404)
 
@@ -95,5 +127,8 @@ The original `python app.py` mode remains available on a persistent Python servi
 - Filters, pagination, source-round dialog, methodology dialog and CSV download tested.
 - Browser network interruption tested: history retained, feed unavailable, estimates paused; reconnection recovered.
 - Estimated outcome probabilities sum to 1; stored source round IDs are unique.
+
+- Forward-accounting tests exercised HIT, MISS, bonus MISS, immutable selections, duplicate suppression, start-time eligibility, gaps, failures and reloads using actual source records in an isolated test-clock replay.
+- A newly arriving live round resolved a previously locked forecast during a separate prospective browser check. This verifies accounting, not a predictive advantage; the observation was not seeded into the production ledger.
 
 18+. Results and exploratory estimates are not betting advice.
