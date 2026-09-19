@@ -18,8 +18,8 @@ Open http://localhost:3000. Set `PORT` to change the listening port. The browser
 - Source: `https://api-cs.casino.org/svc-evolution-game-events/api/crazytime`
 - Source reference: https://www.casino.org/casinoscores/crazy-time/
 - Table: `CrazyTime0000001` (original Crazy Time, not Crazy Time A).
-- Requests include `page=0`, `size=500` initially (`100` subsequently), `sort=data.settledAt,desc`, `duration=24`, and the table ID.
-- The server polls at 15-second intervals plus request time; the browser reads the server every 5 seconds while visible. This is near-live polling, not a zero-delay stream.
+- Requests include `page=0`, `size=500` initially (`10` on regular warm updates; full refresh after a gap), `sort=data.settledAt,desc`, `duration=24`, and the table ID.
+- The Python collector and browser target 3-second start-to-start intervals, without overlapping requests. Source publication time, network time and the two polling phases still add latency. This is near-live polling, not a zero-delay stream. Provider 429/503 backoff is respected.
 - Only source-resolved rounds with a matching table, a known outcome, source ID and valid settlement timestamp are stored.
 - Source IDs deduplicate SQLite records. Timestamps, multipliers, payouts and outcomes originate from the source. Missing fields remain missing; there are no generated replacements.
 - `data/results.sqlite3` is created automatically. No seeded or demo data is shipped in the source ZIP.
@@ -45,13 +45,13 @@ Set the build environment variable `CRAZY_TIME_HLS_URL` to an authorized **HTTPS
 
 The video and result feed are separate and may have different delays. The operator must confirm any replacement video is the same original Crazy Time table. Video timing is not used to infer a future outcome or determine a prediction verdict. The result feed and ledger continue operating if the video module fails to load or the provider rejects playback.
 
-The latest-result tiles, history spin-result and top-slot cells, ledger actual-result cells, and clickable round-detail panels now use the same reference artwork as the signal cards. Result IDs, timestamps, outcomes and multipliers remain source-derived. The eight-outcome forecast cards also expose observed counts, so repeated selections can be inspected rather than assumed to be hardcoded.
+The latest-result tiles, history spin-result and top-slot cells, ledger actual-result cells, and clickable round-detail panels now use the same reference artwork as the signal cards. Result IDs, timestamps, outcomes and multipliers remain source-derived. The upcoming prediction panel shows exactly four cards. Eight-outcome calculations and counts remain in frozen ledger exports and methodology, not an extra eight-card grid.
 
 ## Forecasts and prospective HIT / MISS tracking
 
 **No hack, guaranteed next result, calibrated next-spin model or proven edge is offered.** A fair independent wheel cannot be predicted from historical frequency. Number outcomes occupy 45/54 segments, so selecting the same four numbers can be a legitimate coverage strategy without demonstrating any skill.
 
-All eight outcomes, including all four bonuses, are now displayed. The exploratory historical estimate remains:
+All eight outcomes, including all four bonuses, remain eligible internally. Only the four selected estimates are displayed in the prediction panel; the duplicate eight-card grid and its expansion controls have been removed. The exploratory historical estimate remains:
 
 ```
 estimate = (count in latest up-to-100 real rounds + segment count) / (sample size + 54)
@@ -101,7 +101,7 @@ Keep the page visible. Source time and retrieved ordering are relied on; feed co
 npm test
 ```
 
-Requires the real source endpoint. Tests replay actual source records with an isolated test clock to exercise scoring guards, bonus misses, deduplication and cancellation. They do not populate the UI and their output is **not** prospective validation or an accuracy claim. There is no synthetic-result fallback if the source is unavailable.
+Requires the real source endpoint. Tests replay actual source records with an isolated test clock to exercise scoring guards, bonus misses, deduplication and cancellation. They do not populate the UI and their output is **not** prospective validation or an accuracy claim. There is no synthetic-result fallback if the source is unavailable. A separate transport-only test simulates HTTP 429 after retrieving real history to verify Retry-After behavior; no fabricated spins are produced or displayed.
 
 ## Features
 
@@ -111,7 +111,7 @@ Requires the real source endpoint. Tests replay actual source records with an is
 - Connection monitor and explicit stale/offline states
 - 1/6/24-hour retrieved-sample statistics
 - Outcome and bonus filtering, pagination, CSV export
-- All eight outcome estimates, exhaustive deterministic four-set selection, original-reference signal artwork and visible methodology
+- Exactly four upcoming forecast cards, selected deterministically from all eight outcomes; original-reference artwork and visible methodology
 - Frozen prospective forecasts with HIT / MISS / UNSCORED logging, baseline comparison and JSON export
 
 ## Netlify deployment (fixes the static-host 404)
@@ -133,7 +133,11 @@ The build deliberately creates `site/index.html` and `site/static/*` to match th
 
 ### Netlify data limits
 
-The browser requests real results every 15 seconds while visible, plus request time. Each function fetch retrieves up to 500 actual recent rounds. Warm instances cache fetches for at most 15 seconds to reduce source requests. Serverless instances have no persistent history or background polling; the selected 24-hour view may therefore contain only the latest several hours of retrieved rounds. The UI discloses this limit. On a failed request, any actual history already present in the browser is retained and estimates pause. A cold start with an unavailable source shows no results, never invented ones.
+The browser targets **3-second start-to-start** refreshes while visible, not 3 seconds of extra waiting after a fast request. It never overlaps requests. The old 15-second function cache is replaced with a **1-second** warm-instance cache for duplicate request coalescing. On a cold start or after a gap over 45 seconds the function retrieves up to 500 actual recent source rounds; on normal warm refreshes it requests only the latest 10, merges by source ID and retains at most 500. Source-reported 429/503 responses cause backoff of at least 30 seconds and honor a longer Retry-After. Hidden tabs stop polling; returning checks immediately.
+
+Results are rendered when a response arrives, with no additional presentation hold. The request interval is **not a guarantee that source results arrive within 3 seconds**. Provider publication delays, source caching, cold starts and network time remain outside this application's control. A public WebSocket connection was attempted from the normal test browser and was unavailable; no origin spoofing or access-control bypass was attempted, and an unverified push feed is not claimed.
+
+Serverless instances have no persistent history or background polling; the selected 24-hour view may therefore contain only the latest several hours of retrieved rounds. On a failed request, actual history already present in the browser is retained and estimates pause. A cold start with an unavailable source shows no results, never invented ones.
 
 The public source may block cloud providers, change its schema, or become unavailable. A successful local check does not guarantee access from Netlify; check `/api/results` on your deployed site. No credentials are needed or included.
 
@@ -164,5 +168,7 @@ The original `python app.py` mode remains available on a persistent Python servi
 - A newly arriving live round resolved a previously locked forecast during a separate prospective browser check. This verifies accounting, not a predictive advantage; the observation was not seeded into the production ledger.
 
 - Actual reference video request was rejected; browser unavailability was surfaced correctly while results continued. Also tested missing-player-library isolation without substituting any media or result data.
+
+- Simplified forecast panel verified to render exactly four cards on desktop and mobile. Normal-browser HTTP refresh cadence and upstream check timestamp progression were measured; this does not establish zero end-to-end delivery delay.
 
 18+. Results and exploratory estimates are not betting advice.

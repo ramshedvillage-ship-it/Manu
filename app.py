@@ -1,6 +1,7 @@
 """CrazyScope: source-only Crazy Time results. No simulated data paths."""
 import json, math, os, sqlite3, threading, time
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import requests
 from flask import Flask, jsonify, send_from_directory
 
@@ -8,10 +9,11 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(ROOT, 'data', 'results.sqlite3')
 SOURCE = 'https://api-cs.casino.org/svc-evolution-game-events/api/crazytime'
 TABLE = 'CrazyTime0000001'
+POLL_SECONDS = 3
 SEGMENTS = {'1':21, '2':13, '5':7, '10':4, 'CoinFlip':4, 'Pachinko':2, 'CashHunt':2, 'CrazyBonus':1}
 app = Flask(__name__, static_folder='static')
 lock = threading.Lock()
-state = {'checkedAt':None, 'successAt':None, 'error':None, 'received':0, 'rejected':0}
+state = {'checkedAt':None, 'successAt':None, 'error':None, 'received':0, 'rejected':0, 'retryAt':None}
 os.makedirs(os.path.dirname(DB), exist_ok=True)
 with sqlite3.connect(DB) as db:
     db.execute('CREATE TABLE IF NOT EXISTS results (id TEXT PRIMARY KEY, ts REAL NOT NULL, body TEXT NOT NULL)')
@@ -37,10 +39,16 @@ def collect():
     first = True
     while True:
         checked = time.time()
+        retry_at = None
         try:
-            r = requests.get(SOURCE, params={'page':0,'size':500 if first else 100,
+            r = requests.get(SOURCE, params={'page':0,'size':500 if first or not state['successAt'] or checked-state['successAt']>45 else 10,
                 'sort':'data.settledAt,desc','duration':24,'tableId':TABLE}, timeout=12,
                 headers={'Accept':'application/json','Cache-Control':'no-cache'})
+            if r.status_code in (429,503):
+                header=r.headers.get('Retry-After','30')
+                try: delay=float(header) if header.isdigit() else parsedate_to_datetime(header).timestamp()-time.time()
+                except (ValueError, TypeError, OverflowError): delay=30
+                retry_at=time.time()+max(30,delay)
             r.raise_for_status()
             raw = r.json()
             if not isinstance(raw,list) or not raw: raise ValueError('Source returned no results')
@@ -52,11 +60,11 @@ def collect():
             with sqlite3.connect(DB) as db:
                 db.executemany('INSERT OR REPLACE INTO results VALUES (?,?,?)', [(x['id'],x['timestamp'],json.dumps(x)) for x in valid])
                 db.execute('DELETE FROM results WHERE ts < ?', (time.time()-86400,))
-            with lock: state.update(checkedAt=checked,successAt=time.time(),error=None,received=len(valid),rejected=rejected)
+            with lock: state.update(checkedAt=checked,successAt=time.time(),error=None,received=len(valid),rejected=rejected,retryAt=None)
             first=False
         except Exception as exc:
-            with lock: state.update(checkedAt=checked,error=f'{type(exc).__name__}: {str(exc)[:200]}')
-        time.sleep(15)
+            with lock: state.update(checkedAt=checked,error=f'{type(exc).__name__}: {str(exc)[:200]}',retryAt=retry_at)
+        time.sleep(max(0.25, (retry_at or checked+POLL_SECONDS)-time.time()))
 
 @app.get('/')
 def index(): return send_from_directory(app.static_folder,'index.html')
@@ -81,7 +89,7 @@ def results():
                               'estimate':(count+n)/(len(sample)+54) if sample else None})
     probabilities.sort(key=lambda x:x['estimate'] or x['base'],reverse=True)
     return jsonify(results=rows,source={'name':'CasinoScores','url':SOURCE,'tableId':TABLE,
-        'page':'https://www.casino.org/casinoscores/crazy-time/','pollSeconds':15,'status':status,
+        'page':'https://www.casino.org/casinoscores/crazy-time/','pollSeconds':POLL_SECONDS,'clientPollSeconds':max(POLL_SECONDS,math.ceil((meta.get('retryAt') or now)-now)),'mode':'python','status':status,'retryAt':iso(meta['retryAt']) if meta.get('retryAt') else None,
         'checkedAt':iso(meta['checkedAt']) if meta['checkedAt'] else None,
         'successAt':iso(meta['successAt']) if meta['successAt'] else None,
         'latestAgeSeconds':age,'error':meta['error'],'rejected':meta['rejected']},
