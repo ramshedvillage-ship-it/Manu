@@ -13,7 +13,7 @@ python app.py
 
 Open http://localhost:3000. Set `PORT` to change the listening port. The browser uses same-origin `/api/results`; no API keys or browser-side CORS workarounds are required. Fonts are bundled locally. Do not open `static/index.html` directly: live data requires the Python service.
 
-## Real data path
+## Real data path (persistent Python mode; see Netlify differences below)
 
 - Source: `https://api-cs.casino.org/svc-evolution-game-events/api/crazytime`
 - Source reference: https://www.casino.org/casinoscores/crazy-time/
@@ -50,9 +50,42 @@ The 54-segment prior uses counts 21/13/7/4/4/2/2/1 for 1/2/5/10/Coin Flip/Pachin
 - Outcome and bonus filtering, pagination, CSV export
 - Eight-outcome estimates and visible methodology
 
-## Deployment
+## Netlify deployment (fixes the static-host 404)
 
-The running workspace preview is not a permanent public deployment. For hosting, use a persistent Python service/container with a writable persistent `data/` directory and HTTPS reverse proxy. The entrypoint uses Waitress with one source-collector thread. Run a single instance unless you adapt storage and collection coordination. The background collector and local SQLite database are **not designed for unmodified Vercel serverless deployment**. A Vercel frontend would need a separately hosted persistent API (or a redesigned scheduled collector and managed database).
+This repository now includes a **Netlify-native Node serverless adapter**. Netlify does not run the Python server; it serves the built HTML/CSS/JS and executes the `results` function for `/api/results`.
+
+Link the repository in Netlify and use:
+
+- Production branch: `main`
+- Base directory: leave empty (repository root)
+- Build command: `npm run build`
+- Publish directory: `site`
+- Functions directory: `netlify/functions`
+- Node: 22 (set by `netlify.toml`)
+
+`netlify.toml` sets these options and rewrites `/api/results` to the function. Run a new production deploy after updating the repository. If an old site has a custom base/package directory, clear it first. A manual static drag-and-drop upload alone will not deploy the live-results function.
+
+The build deliberately creates `site/index.html` and `site/static/*` to match the browser's asset URLs. Never publish the project root or just the `static` folder for this setup.
+
+### Netlify data limits
+
+The browser requests real results every 15 seconds while visible, plus request time. Each function fetch retrieves up to 500 actual recent rounds. Warm instances cache fetches for at most 15 seconds to reduce source requests. Serverless instances have no persistent history or background polling; the selected 24-hour view may therefore contain only the latest several hours of retrieved rounds. The UI discloses this limit. On a failed request, any actual history already present in the browser is retained and estimates pause. A cold start with an unavailable source shows no results, never invented ones.
+
+The public source may block cloud providers, change its schema, or become unavailable. A successful local check does not guarantee access from Netlify; check `/api/results` on your deployed site. No credentials are needed or included.
+
+### Local preview of the Netlify adapter
+
+```sh
+npm install
+npm run build
+npm run preview
+```
+
+Open http://localhost:3001. This tests the static artifact and serverless handler locally; it does not deploy to Netlify.
+
+### Alternative persistent Python hosting
+
+The original `python app.py` mode remains available on a persistent Python service/container with writable `data/` storage and an HTTPS reverse proxy. Waitress runs one collector thread. Run one instance unless collection/storage coordination is adapted. Python mode accumulates up to 24 hours of retrieved records, unlike the non-persistent Netlify adapter. Vercel requires its own hosting adapter or a separately hosted API.
 
 ## Validation performed
 

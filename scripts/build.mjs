@@ -1,0 +1,10 @@
+import { mkdir, cp, copyFile, rm } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+const root = new URL('../', import.meta.url);
+const site = new URL('site/', root);
+await rm(site, { recursive: true, force: true });
+await mkdir(site, { recursive: true });
+await cp(new URL('static/', root), new URL('static/', site), { recursive: true });
+await copyFile(new URL('static/index.html', root), new URL('index.html', site));
+console.log('Netlify publish directory ready:', fileURLToPath(site));
+console.log('Real results: /api/results -> Netlify function results');

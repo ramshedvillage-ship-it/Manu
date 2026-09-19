@@ -6,3 +6,7 @@ data/*.sqlite3*
 .env.*
 !.env.example
 *.log
+
+site/
+node_modules/
+.netlify/
