@@ -4,14 +4,15 @@ import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import handler from '../netlify/functions/results.mjs';
+import checkSources from '../netlify/functions/source-check.mjs';
 const root=path.resolve(fileURLToPath(new URL('../site/',import.meta.url))); 
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.woff2':'font/woff2','.svg':'image/svg+xml'};
 const port=Number(process.env.PORT||3001);
 http.createServer(async(req,res)=>{
   try {
     const url=new URL(req.url,'http://preview.invalid');
-    if(url.pathname==='/api/results'||url.pathname==='/.netlify/functions/results') {
-      const response=await handler(new Request(url,{method:req.method}));
+    if(url.pathname==='/api/results'||url.pathname==='/.netlify/functions/results'||url.pathname==='/api/source-check'||url.pathname==='/.netlify/functions/source-check') {
+      const response=await (url.pathname.endsWith('source-check')?checkSources:handler)(new Request(url,{method:req.method}));
       res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));return;
     }
     const pathname=decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname);

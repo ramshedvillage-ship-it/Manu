@@ -89,6 +89,33 @@ def results():
         'available':bool(sample) and status=='connected','validated':False,
         'method':'(count in latest 100 source rounds + wheel segments) / (sample size + 54)'})
 
+@app.get('/api/source-check')
+def compare_public_sources():
+    from concurrent.futures import ThreadPoolExecutor
+    feeds=[('CasinoScores', SOURCE+'?page=0&size=10&sort=data.settledAt,desc&duration=24&tableId='+TABLE),
+           ('SLOTyi','https://slotyi.com/api/crazytime')]
+    def check(feed):
+        name,url=feed; start=time.time()
+        try:
+            response=requests.get(url, timeout=8, headers={'Accept':'application/json'})
+            response.raise_for_status()
+            raw=response.json()
+            rows=[]
+            for row in raw:
+                try: rows.append(normalize(row))
+                except (KeyError,TypeError,ValueError): pass
+            rows.sort(key=lambda r:r['timestamp'],reverse=True)
+            if not rows: raise ValueError('No supported completed rounds')
+            latest=rows[0]
+            return {'name':name,'url':url,'ok':True,'checkedAt':iso(time.time()),
+                'requestMilliseconds':round((time.time()-start)*1000),
+                'latest':{k:latest[k] for k in ('id','startedAt','settledAt','outcome')}}
+        except Exception as exc:
+            return {'name':name,'url':url,'ok':False,'checkedAt':iso(time.time()),'error':str(exc)[:180]}
+    with ThreadPoolExecutor(max_workers=2) as pool: results=list(pool.map(check,feeds))
+    return jsonify(checkedAt=iso(time.time()),servedAt=iso(time.time()),feeds=results,
+        note='Both endpoints show completed rounds. Matching IDs may mean a shared upstream source, not independent verification. Timing differences do not reveal a future result. No alternate data is inserted into forecasts.')
+
 @app.after_request
 def headers(response):
     if response.content_type.startswith('application/json'): response.headers['Cache-Control']='no-store'

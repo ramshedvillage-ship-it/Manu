@@ -1,21 +1,33 @@
 // Prospective, browser-local validation. Never backfills predictions from history.
-export const MODEL = 'historical-prior54-v1';
+export const MODEL = 'historical-prior54-all70-v2';
+// Physical wheel specification, NOT simulated spins or a preselected signal.
 export const SEGMENTS = {'1':21,'2':13,'5':7,'10':4,CoinFlip:4,Pachinko:2,CashHunt:2,CrazyBonus:1};
-export const BASELINE = ['1','2','5','10'];
-export const POLICY_NAMES = {coverage:'Highest estimated coverage',balanced:'2 numbers + 2 bonuses'};
-export const isBonus = outcome => !BASELINE.includes(outcome);
+// Benchmark only, derived from wheel segment counts; never supplied to the selector.
+export const BASELINE = Object.entries(SEGMENTS).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'en')).slice(0,4).map(([outcome])=>outcome);
+export const POLICY_NAMES = {coverage:'All-8 optimizer · 70 combinations',balanced:'Legacy: 2 numbers + 2 bonuses'};
+export const isBonus = outcome => !/^\d+$/.test(String(outcome));
 const timeOf = value => typeof value==='string' ? Date.parse(value) : NaN;
-const newId = () => globalThis.crypto.randomUUID();
-export function selectOutcomes(probabilities,policy='coverage') {
-  const sorted=[...probabilities].sort((a,b)=>b.estimate-a.estimate || Object.keys(SEGMENTS).indexOf(a.outcome)-Object.keys(SEGMENTS).indexOf(b.outcome));
-  return (policy==='balanced' ? [...sorted.filter(p=>!isBonus(p.outcome)).slice(0,2),...sorted.filter(p=>isBonus(p.outcome)).slice(0,2)] : sorted.slice(0,4)).map(p=>p.outcome);
+let recordSequence=0;
+// IDs use session time plus a counter. No random sampling is used anywhere in forecasts.
+const newId = () => `forecast-${Date.now().toString(36)}-${++recordSequence}`;
+export function optimizeFour(probabilities) {
+  if(!Array.isArray(probabilities)||probabilities.length!==8||new Set(probabilities.map(p=>p.outcome)).size!==8||probabilities.some(p=>!Object.hasOwn(SEGMENTS,p.outcome)||!Number.isFinite(p.estimate)||p.estimate<0||p.estimate>1))return {selected:[],coverage:null,evaluated:0};
+  const candidates=[...probabilities].sort((a,b)=>a.outcome.localeCompare(b.outcome,'en'));
+  let best=null,evaluated=0;
+  for(let a=0;a<5;a++)for(let b=a+1;b<6;b++)for(let c=b+1;c<7;c++)for(let d=c+1;d<8;d++) {
+    const set=[candidates[a],candidates[b],candidates[c],candidates[d]];
+    const coverage=set.reduce((sum,p)=>sum+p.estimate,0);evaluated++;
+    if(!best||coverage>best.coverage+1e-12)best={set,coverage};
+  }
+  return {selected:best.set.sort((a,b)=>b.estimate-a.estimate||a.outcome.localeCompare(b.outcome,'en')).map(p=>p.outcome),coverage:best.coverage,evaluated};
 }
+export function selectOutcomes(probabilities) {return optimizeFour(probabilities).selected;}
 export class ForecastLedger {
   constructor(saved=null) {
     this.entries=[];this.pending=null;this.active=false;this.policy='coverage';this.lastTick=null;this.lastSeenId=null;
     if(saved?.version===1 && Array.isArray(saved.entries)) {
       this.entries=saved.entries.filter(e=>e && ['HIT','MISS','UNSCORED'].includes(e.status) && typeof e.id==='string').slice(-1000);
-      if(Object.hasOwn(POLICY_NAMES,saved.policy))this.policy=saved.policy;
+      // Older policy labels remain on past records; all new locks use unrestricted optimization.
       if(saved.pending?.id) {this.pending=saved.pending;this.cancel('Page reloaded; continuous observation was not verified.');}
     }
   }
@@ -36,9 +48,11 @@ export class ForecastLedger {
     const probabilities=payload.forecast?.probabilities;
     if(!Array.isArray(probabilities) || probabilities.length!==8 || probabilities.some(p=>!Object.hasOwn(SEGMENTS,p.outcome)||!Number.isFinite(p.estimate)))return;
     const copy=probabilities.map(p=>({...p}));
-    this.pending={id:newId(),model:MODEL,policy:this.policy,lockedAt:new Date(now).toISOString(),
+    this.policy='coverage';
+    const optimization=optimizeFour(copy);if(optimization.evaluated!==70)return;
+    this.pending={id:newId(),model:MODEL,policy:'coverage',lockedAt:new Date(now).toISOString(),
       trainingThroughId:payload.results[0].id,cursorId:payload.results[0].id,sampleSize:payload.forecast.sampleSize,
-      selected:selectOutcomes(copy,this.policy),probabilities:copy};
+      selected:optimization.selected,evaluatedCombinations:optimization.evaluated,estimatedCoverage:optimization.coverage,probabilities:copy};
   }
   advance(payload, now) {
     if(!this.active)return;

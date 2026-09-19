@@ -41,14 +41,27 @@ estimate = (count in latest up-to-100 real rounds + segment count) / (sample siz
 
 The 54-segment prior uses counts 21/13/7/4/4/2/2/1 for 1/2/5/10/Coin Flip/Pachinko/Cash Hunt/Crazy Time. Under a fair independent wheel model, the wheel baseline—not recent frequency—is the next-spin probability.
 
-Two explicitly labelled selection policies:
+### Deterministic selection from all eight outcomes
 
-- **Highest estimated coverage:** rank all eight estimates and select the first four. Repeated number selections are expected. No bonus is banned.
-- **2 numbers + 2 bonuses:** select the two highest estimates in each group. This intentionally allocates slots to bonuses, usually at the cost of total coverage. It does not predict that a bonus is due.
+All **70** four-outcome combinations are evaluated. The selected set has the maximum sum of the source-derived historical estimates. Exact ties resolve alphabetically. This is mathematically equivalent to selecting the four highest estimates, not a new predictive advantage. There is no random sampling, fixed four-outcome list, or forced number/bonus allocation. With unavailable data the engine produces no replacement picks. The previous bonus-allocation option is removed for new forecasts; its label remains on old ledger records for auditability.
+
+The physical segment counts remain as an explicitly disclosed wheel prior, not fictional historical results. A benchmark set is derived separately from wheel frequencies for comparison only; it is never passed to the signal selector. The same four signals can legitimately recur when the estimated ordering has not changed.
+
+For a fair independent standard wheel, the maximum true next-spin coverage of any four outcomes is 45/54 = 83.33%, not 100%. Historical estimates may differ from this theoretical probability; this is sampling variation, not proof of an exploitable advantage.
+
+### Original-reference signal artwork
+
+The four prominent signal cards and result tiles use locally bundled artwork from the supplied CasinoScores reference's public Cloudinary assets. See `static/cards/ATTRIBUTION.md`. Third-party names, logos and artwork are not claimed as original work. Confirm permission/licensing before commercial redistribution.
+
+### Public-feed comparison (not a prediction source)
+
+The feed monitor includes **Compare public result feeds**, backed by `/api/source-check`. It queries the existing CasinoScores endpoint and the public `https://slotyi.com/api/crazytime` completed-round endpoint. Netlify caches checks for up to 60 seconds. It shows real source IDs and settlement timestamps, HTTP fetch duration and errors. It does not treat fetch duration as end-to-end delivery latency.
+
+Matching IDs can indicate a shared upstream source, not independent verification. No access controls are bypassed, no hidden or unreleased result is requested, and alternate-feed data is not silently inserted into forecasts. This comparison does not establish which feed is consistently faster; a long-running arrival-time study would be required.
 
 ### Forward-only local validation
 
-Press **Start live validation**. All eight estimates, four selections, model version, selected policy, sample size, training-through source ID and lock timestamp are saved before observing a new eligible round. Policy changes apply only to the next forecast; pending selections never change in response to a result.
+Press **Start live validation**. All eight estimates, four selections, model version, selected policy, sample size, training-through source ID and lock timestamp are saved before observing a new eligible round. New locks always use unrestricted all-8 optimization; pending selections never change in response to a result.
 
 - HIT: the actual eligible result is one of the frozen four.
 - MISS: the actual eligible result is not selected. An unselected bonus is a MISS, not excused.
@@ -56,7 +69,7 @@ Press **Start live validation**. All eight estimates, four selections, model ver
 
 An eligible round's **source-reported start** must be strictly more than 2 seconds after the forecast lock. The first initial history response never generates retrospective wins. Within an uninterrupted observation session, the next observed eligible round resolves the pending forecast; duplicate round IDs cannot be scored twice. Additional retrieved rounds do not receive invented backdated predictions.
 
-The fixed 1/2/5/10 baseline is scored on exactly the same eligible rounds. Bonus-only and number-only performance are shown separately. Overall counters combine policies; inspect the policy recorded on each row before interpreting changes.
+The wheel-frequency reference is derived separately from segment counts and scored on exactly the same eligible rounds. Bonus-only and number-only performance are shown separately. Overall counters combine policies; inspect the policy recorded on each row before interpreting changes.
 
 ### Important limits
 
@@ -79,7 +92,7 @@ Requires the real source endpoint. Tests replay actual source records with an is
 - Connection monitor and explicit stale/offline states
 - 1/6/24-hour retrieved-sample statistics
 - Outcome and bonus filtering, pagination, CSV export
-- All eight outcome estimates, optional bonus-inclusive allocation, and visible methodology
+- All eight outcome estimates, exhaustive deterministic four-set selection, original-reference signal artwork and visible methodology
 - Frozen prospective forecasts with HIT / MISS / UNSCORED logging, baseline comparison and JSON export
 
 ## Netlify deployment (fixes the static-host 404)

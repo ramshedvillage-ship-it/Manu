@@ -1,7 +1,7 @@
 // Regression tests replay actual source records using a test clock.
 // These assertions test accounting, NOT prospective accuracy. They never write to the app ledger.
 import assert from 'node:assert/strict';
-import {ForecastLedger,SEGMENTS,selectOutcomes,summarize} from '../static/ledger.js';
+import {ForecastLedger,SEGMENTS,selectOutcomes,optimizeFour,summarize} from '../static/ledger.js';
 import handler from '../netlify/functions/results.mjs';
 const source=await (await handler(new Request('http://test/api/results'))).json();
 assert(source.results.length>10,'A real source history is required; no synthetic fallback is used.');
@@ -35,6 +35,13 @@ const lmissing=start(c);observe(lmissing,c,c.lock,{...c.actual,startedAt:null});
 const lgap=start(c);lgap.advance(payload(c.history),c.lock+50000);assert.equal(lgap.entries[0].status,'UNSCORED');assert.equal(summarize(lgap.entries).n,0);
 const loff=start(c);loff.advance({...payload(c.history),source:{status:'unavailable'}},c.lock+15000);assert.equal(loff.entries[0].status,'UNSCORED');assert.equal(loff.pending,null);
 const lrestored=new ForecastLedger(start(c).export());assert.equal(lrestored.active,false);assert.equal(lrestored.pending,null);assert.equal(lrestored.entries[0].status,'UNSCORED');
-const selections=selectOutcomes(payload(c.history).forecast.probabilities,'balanced');assert.equal(selections.filter(o=>!['1','2','5','10'].includes(o)).length,2);
-console.log('PASS: real-record accounting tests — HIT, MISS, bonus MISS, frozen picks, no duplicate scoring, no historical backfill, start-time guard, missing evidence, observation gap, outage, reload, bonus allocation.');
+const probs=payload(c.history).forecast.probabilities;
+const optimized=optimizeFour(probs);
+assert.equal(optimized.evaluated,70);assert.equal(new Set(optimized.selected).size,4);
+assert.deepEqual(optimizeFour([...probs].reverse()),optimized,'Input order cannot introduce randomness');
+const upper=[...probs].sort((a,b)=>b.estimate-a.estimate).slice(0,4).reduce((s,p)=>s+p.estimate,0);
+assert(Math.abs(upper-optimized.coverage)<1e-12,'All-70 search must maximize summed estimates');
+assert.deepEqual(selectOutcomes(probs,'balanced'),optimized.selected,'Legacy category policy must not force any new picks');
+assert.equal(optimizeFour([]).selected.length,0,'No sample means no fallback picks');
+console.log('PASS: real-record accounting tests — HIT, MISS, bonus MISS, frozen picks, no duplicate scoring, no historical backfill, start-time guard, missing evidence, observation gap, outage, reload, all-70 optimal coverage, deterministic ties, no forced category allocation.');
 console.log('This test-clock replay is NOT a live validation result or an accuracy claim.');
