@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import handler from '../netlify/functions/results.mjs';
 import checkSources from '../netlify/functions/source-check.mjs';
 const root=path.resolve(fileURLToPath(new URL('../site/',import.meta.url))); 
-const mime={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.woff2':'font/woff2','.svg':'image/svg+xml'};
+const mime={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.woff2':'font/woff2','.svg':'image/svg+xml','.png':'image/png','.mjs':'text/javascript'};
 const port=Number(process.env.PORT||3001);
 http.createServer(async(req,res)=>{
   try {

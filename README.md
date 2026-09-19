@@ -29,6 +29,24 @@ Open http://localhost:3000. Set `PORT` to change the listening port. The browser
 
 This confirms provenance to the CasinoScores endpoint, not independent verification of the physical wheel. The endpoint is third-party infrastructure; availability, latency and schema are outside this application's control. Confirm the provider's permission, licensing and terms before commercial redistribution. Do not bypass any future access restrictions.
 
+## Video panel and source-art result cards
+
+The video panel attempts **direct provider playback** only when the user presses **Load live stream**. It uses locally bundled hls.js 1.7.3 with native HLS fallback. Playback status changes to Playing only after the browser emits a playback event; idle, buffering, paused, stopped and unavailable states are distinct. Stalled/failed streams are not shown indefinitely as apparently live frozen frames. There is no demo video, looped recording, media proxy, spoofed header, DRM bypass or geoblock bypass.
+
+The public HLS address advertised in the supplied reference was:
+
+`https://live101.egprom.com/app/43/amlst:dc3_ct_auto/playlist.m3u8`
+
+**Important: during implementation, a direct request returned HTTP 418 and the browser test could not play it. The player exists, but working playback of this reference URL is NOT verified.** A user region, domain, CORS policy, provider change or entitlement requirement may prevent playback. No attempt is made to defeat restrictions. Use the reference-site link or obtain a provider-approved stream for your deployment.
+
+### Configure a provider-approved stream on Netlify
+
+Set the build environment variable `CRAZY_TIME_HLS_URL` to an authorized **HTTPS HLS playback URL**, then redeploy. `scripts/build.mjs` writes that URL into the built `site/static/stream-config.js`. The URL must be intended for delivery to browsers and must permit playback from your deployment domain. Do not put server-only API keys or GitHub credentials in this setting; the generated playback URL is browser-visible. In persistent Python mode, configure `static/stream-config.js` directly instead.
+
+The video and result feed are separate and may have different delays. The operator must confirm any replacement video is the same original Crazy Time table. Video timing is not used to infer a future outcome or determine a prediction verdict. The result feed and ledger continue operating if the video module fails to load or the provider rejects playback.
+
+The latest-result tiles, history spin-result and top-slot cells, ledger actual-result cells, and clickable round-detail panels now use the same reference artwork as the signal cards. Result IDs, timestamps, outcomes and multipliers remain source-derived. The eight-outcome forecast cards also expose observed counts, so repeated selections can be inspected rather than assumed to be hardcoded.
+
 ## Forecasts and prospective HIT / MISS tracking
 
 **No hack, guaranteed next result, calibrated next-spin model or proven edge is offered.** A fair independent wheel cannot be predicted from historical frequency. Number outcomes occupy 45/54 segments, so selecting the same four numbers can be a legitimate coverage strategy without demonstrating any skill.
@@ -88,6 +106,7 @@ Requires the real source endpoint. Tests replay actual source records with an is
 ## Features
 
 - Responsive desktop/mobile layout
+- Provider video player with accurate status and reference-site fallback (reference playback currently unverified)
 - Timestamped latest rounds and source-linked round detail
 - Connection monitor and explicit stale/offline states
 - 1/6/24-hour retrieved-sample statistics
@@ -143,5 +162,7 @@ The original `python app.py` mode remains available on a persistent Python servi
 
 - Forward-accounting tests exercised HIT, MISS, bonus MISS, immutable selections, duplicate suppression, start-time eligibility, gaps, failures and reloads using actual source records in an isolated test-clock replay.
 - A newly arriving live round resolved a previously locked forecast during a separate prospective browser check. This verifies accounting, not a predictive advantage; the observation was not seeded into the production ledger.
+
+- Actual reference video request was rejected; browser unavailability was surfaced correctly while results continued. Also tested missing-player-library isolation without substituting any media or result data.
 
 18+. Results and exploratory estimates are not betting advice.
